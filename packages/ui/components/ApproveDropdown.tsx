@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Agent } from '../hooks/useAgents';
 import { getAgentSwitchSettings, saveAgentSwitchSettings, type AgentSwitchSettings } from '../utils/agentSwitch';
+import { useI18n } from '../i18n';
 
 interface ApproveDropdownProps {
   onApprove: () => void;
@@ -36,6 +37,7 @@ export const ApproveDropdown: React.FC<ApproveDropdownProps> = ({
   disabled = false,
   isLoading = false,
 }) => {
+  const { t } = useI18n();
   const [setting, setSetting] = useState<AgentSwitchSettings>(() => getAgentSwitchSettings());
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -96,15 +98,15 @@ export const ApproveDropdown: React.FC<ApproveDropdownProps> = ({
           disabled={disabled}
           className={`px-2.5 py-1 rounded-l-md text-xs font-medium transition-all ${baseClasses}`}
         >
-          {isLoading ? 'Approving...' : (
+          {isLoading ? t('actions.approving') : (
             agentLabel ? (
               <span className="flex items-center gap-1">
-                Approve
+                {t('actions.approve')}
                 <span className="opacity-60">&rarr;</span>
                 <span className="max-w-[120px] truncate">{agentLabel}</span>
                 {notFound && <span className="opacity-60 text-[10px]">(?)</span>}
               </span>
-            ) : 'Approve'
+            ) : t('actions.approve')
           )}
         </button>
         <button
@@ -122,7 +124,7 @@ export const ApproveDropdown: React.FC<ApproveDropdownProps> = ({
       {isOpen && (
         <div className="absolute right-0 top-full mt-1 w-52 rounded-lg border border-border bg-popover shadow-xl z-[70] overflow-hidden py-1">
           <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-            Switch to agent
+            {t('approveDropdown.switchToAgent')}
           </div>
           {agents.map((agent) => {
             const selected = isSelected(agent.id, setting);
@@ -148,7 +150,7 @@ export const ApproveDropdown: React.FC<ApproveDropdownProps> = ({
             >
               <span className="w-4 flex-shrink-0"><Checkmark /></span>
               <span className="truncate">{setting.customName}</span>
-              <span className="text-[10px] text-muted-foreground ml-auto">(custom)</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">({t('approveDropdown.custom')})</span>
             </button>
           )}
           <div className="border-t border-border my-1" />
@@ -161,7 +163,7 @@ export const ApproveDropdown: React.FC<ApproveDropdownProps> = ({
             }`}
           >
             <span className="w-4 flex-shrink-0">{isNoSwitch && <Checkmark />}</span>
-            No switch
+            {t('approveDropdown.noSwitch')}
           </button>
         </div>
       )}

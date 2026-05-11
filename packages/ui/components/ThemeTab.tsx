@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme, type Mode } from './ThemeProvider';
 import { SunIcon, MoonIcon, SystemIcon } from './icons/themeIcons';
+import { useI18n } from '../i18n';
 
 interface ThemeTabProps {
   onPreview?: () => void;
@@ -9,12 +10,18 @@ interface ThemeTabProps {
 
 export const ThemeTab: React.FC<ThemeTabProps> = ({ onPreview, compact }) => {
   const { mode, setMode, colorTheme, setColorTheme, availableThemes, resolvedMode } = useTheme();
+  const { t } = useI18n();
+  const modeLabels: Record<Mode, string> = {
+    dark: t('menu.theme.dark'),
+    light: t('menu.theme.light'),
+    system: t('menu.theme.system'),
+  };
 
   return (
     <>
       {/* Mode */}
       <div className={compact ? 'flex items-center gap-3 mb-2' : 'space-y-2'}>
-        {!compact && <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Mode</label>}
+        {!compact && <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t('theme.mode')}</label>}
         <div className="flex gap-1">
           {(['dark', 'light', 'system'] as Mode[]).map(m => {
             const isActive = mode === m;
@@ -31,19 +38,19 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ onPreview, compact }) => {
                 {m === 'dark' && (
                   <span className="flex items-center gap-1.5">
                     <MoonIcon className="w-3 h-3" />
-                    Dark
+                    {modeLabels.dark}
                   </span>
                 )}
                 {m === 'light' && (
                   <span className="flex items-center gap-1.5">
                     <SunIcon className="w-3 h-3" />
-                    Light
+                    {modeLabels.light}
                   </span>
                 )}
                 {m === 'system' && (
                   <span className="flex items-center gap-1.5">
                     <SystemIcon className="w-3 h-3" />
-                    System
+                    {modeLabels.system}
                   </span>
                 )}
               </button>
@@ -55,7 +62,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ onPreview, compact }) => {
             <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
             </svg>
-            syntax match
+            {t('theme.syntaxMatch')}
           </span>
         )}
       </div>
@@ -65,13 +72,13 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ onPreview, compact }) => {
         {!compact && (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Theme</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t('menu.theme')}</label>
               {onPreview && (
                 <button
                   onClick={onPreview}
                   className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/40 transition-colors"
                 >
-                  Launch Preview Mode
+                  {t('theme.launchPreviewMode')}
                 </button>
               )}
             </div>
@@ -79,7 +86,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ onPreview, compact }) => {
               <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
               </svg>
-              = matched syntax colors in diffs
+              {t('theme.syntaxMatchDescription')}
             </span>
           </div>
         )}
@@ -104,7 +111,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ onPreview, compact }) => {
               >
                 {/* Syntax highlighting badge */}
                 {theme.syntaxHighlighting && (
-                  <div className="absolute top-1 right-1" title="Matched syntax highlighting in diffs">
+                  <div className="absolute top-1 right-1" title={t('theme.syntaxHighlightingTitle')}>
                     <svg className="w-2.5 h-2.5 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                     </svg>

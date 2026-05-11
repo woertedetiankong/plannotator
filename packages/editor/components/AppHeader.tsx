@@ -7,6 +7,7 @@ import { Settings } from '@plannotator/ui/components/Settings';
 import { PlanHeaderMenu } from '@plannotator/ui/components/PlanHeaderMenu';
 import type { CallbackConfig } from '@plannotator/ui/utils/callback';
 import type { UIPreferences } from '@plannotator/ui/utils/uiPreferences';
+import { useI18n } from '@plannotator/ui/i18n';
 
 interface AppHeaderProps {
   // Mode flags (stable after mount)
@@ -122,6 +123,8 @@ export const AppHeader = React.memo<AppHeaderProps>(({
   bearConfigured,
   octarineConfigured,
 }) => {
+  const { t } = useI18n();
+
   return (
     <header data-app-header="true" className="h-12 flex items-center justify-between px-2 md:px-4 border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-[50]">
       <AppHeaderLogo />
@@ -135,13 +138,13 @@ export const AppHeader = React.memo<AppHeaderProps>(({
               onClick={onCallbackFeedback}
               disabled={isSubmitting || !callbackShareUrlReady}
               isLoading={isSubmitting}
-              title="Send feedback to bot"
+              title={t('header.sendFeedbackToBot')}
             />
             <ApproveButton
               onClick={onCallbackApprove}
               disabled={isSubmitting || !callbackShareUrlReady}
               isLoading={isSubmitting}
-              title="Approve design and notify bot"
+              title={t('header.approveDesign')}
             />
           </>
         )}
@@ -151,9 +154,9 @@ export const AppHeader = React.memo<AppHeaderProps>(({
             <button
               onClick={onArchiveCopy}
               className="px-2.5 py-1 rounded-md text-xs font-medium transition-all bg-muted text-foreground hover:bg-muted/80 border border-border"
-              title="Copy plan content"
+              title={t('header.copyPlan')}
             >
-              <span className="hidden md:inline">Copy</span>
+              <span className="hidden md:inline">{t('actions.copy')}</span>
               <svg className="w-4 h-4 md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
@@ -161,9 +164,9 @@ export const AppHeader = React.memo<AppHeaderProps>(({
             <button
               onClick={onArchiveDone}
               className="px-2.5 py-1 rounded-md text-xs font-medium transition-all bg-success text-success-foreground hover:opacity-90"
-              title="Close archive"
+              title={t('header.closeArchive')}
             >
-              Done
+              {t('actions.done')}
             </button>
           </>
         )}
@@ -182,8 +185,8 @@ export const AppHeader = React.memo<AppHeaderProps>(({
                     onClick={onAnnotateFeedback}
                     disabled={isSubmitting || isExiting}
                     isLoading={isSubmitting}
-                    label="Send Annotations"
-                    title="Send Annotations"
+                    label={t('actions.sendAnnotations')}
+                    title={t('actions.sendAnnotations')}
                   />
                 )}
               </>
@@ -192,8 +195,8 @@ export const AppHeader = React.memo<AppHeaderProps>(({
                 onClick={onFeedback}
                 disabled={isSubmitting}
                 isLoading={isSubmitting}
-                label="Send Feedback"
-                title="Send Feedback"
+                label={t('actions.sendFeedback')}
+                title={t('actions.sendFeedback')}
               />
             )}
 
@@ -212,13 +215,13 @@ export const AppHeader = React.memo<AppHeaderProps>(({
                     disabled={isSubmitting || (annotateMode && isExiting)}
                     isLoading={isSubmitting}
                     dimmed={!annotateMode && (origin === 'claude-code' || origin === 'gemini-cli') && showAnnotationsWarning}
-                    title={annotateMode ? 'Approve — no changes requested' : undefined}
+                    title={annotateMode ? t('header.approveNoChangesLong') : undefined}
                   />
                   {!annotateMode && (origin === 'claude-code' || origin === 'gemini-cli') && showAnnotationsWarning && (
                     <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-xl text-xs text-foreground w-56 text-center opacity-0 invisible group-hover/approve:opacity-100 group-hover/approve:visible transition-all pointer-events-none z-50">
                       <div className="absolute bottom-full right-4 border-4 border-transparent border-b-border" />
                       <div className="absolute bottom-full right-4 mt-px border-4 border-transparent border-b-popover" />
-                      {agentName} doesn't support feedback on approval. Your annotations won't be seen.
+                      {t('header.agentApprovalNoFeedback', { agent: agentName })}
                     </div>
                   )}
                 </div>
@@ -237,7 +240,7 @@ export const AppHeader = React.memo<AppHeaderProps>(({
               ? 'bg-primary/15 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
-          title={isPanelOpen ? 'Hide annotations' : 'Show annotations'}
+          title={isPanelOpen ? t('header.hideAnnotations') : t('header.showAnnotations')}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />

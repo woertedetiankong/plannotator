@@ -17,6 +17,7 @@ import { PlanCleanDiffView } from "./PlanCleanDiffView";
 import { PlanRawDiffView } from "./PlanRawDiffView";
 import { PlanDiffBadge } from "./PlanDiffBadge";
 import { VSCodeIcon } from "./VSCodeIcon";
+import { useI18n } from "../../i18n";
 
 interface PlanDiffViewerProps {
   diffBlocks: PlanDiffBlock[];
@@ -52,6 +53,7 @@ export const PlanDiffViewer: React.FC<PlanDiffViewerProps> = ({
   selectedAnnotationId,
   mode,
 }) => {
+  const { t } = useI18n();
   const [vscodeDiffLoading, setVscodeDiffLoading] = useState(false);
   const [vscodeDiffError, setVscodeDiffError] = useState<string | null>(null);
 
@@ -121,9 +123,9 @@ export const PlanDiffViewer: React.FC<PlanDiffViewerProps> = ({
           <button
             onClick={onPlanDiffToggle}
             className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Back to plan view"
+            title={t('plan.backToPlan')}
           >
-            <span className="hidden md:inline text-[10px] font-medium">Exit Diff</span>
+            <span className="hidden md:inline text-[10px] font-medium">{t('plan.exitDiff')}</span>
             <svg
               className="w-3.5 h-3.5"
               fill="none"

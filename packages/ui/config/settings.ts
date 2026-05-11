@@ -11,6 +11,11 @@
 
 import { storage } from '../utils/storage';
 import { generateIdentity } from '../utils/generateIdentity';
+import {
+  DEFAULT_DISPLAY_LANGUAGE,
+  normalizeDisplayLanguage,
+  type DisplayLanguage,
+} from '../i18n/languages';
 
 export interface SettingDef<T> {
   defaultValue: T | (() => T);
@@ -23,6 +28,15 @@ export interface SettingDef<T> {
 }
 
 export const SETTINGS = {
+  language: {
+    defaultValue: DEFAULT_DISPLAY_LANGUAGE as DisplayLanguage,
+    fromCookie: () => normalizeDisplayLanguage(storage.getItem('plannotator-language')),
+    toCookie: (v: DisplayLanguage) => storage.setItem('plannotator-language', v),
+    serverKey: 'language',
+    fromServer: (sc: Record<string, unknown>) => normalizeDisplayLanguage(sc.language),
+    toServer: (v: DisplayLanguage) => ({ language: v }),
+  },
+
   displayName: {
     defaultValue: () => generateIdentity(),
     fromCookie: () => storage.getItem('plannotator-identity') || undefined,

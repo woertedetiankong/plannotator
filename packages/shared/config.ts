@@ -11,6 +11,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { execSync } from "child_process";
 
 export type DefaultDiffType = 'uncommitted' | 'unstaged' | 'staged' | 'merge-base' | 'all';
+export type DisplayLanguage = 'en' | 'zh-CN';
 
 export interface DiffOptions {
   diffStyle?: 'split' | 'unified';
@@ -94,6 +95,12 @@ export function mergePromptConfig(
 }
 
 export interface PlannotatorConfig {
+  /**
+   * Preferred UI display language. Plan/review content itself stays exactly as
+   * authored; this controls Plannotator chrome such as settings and buttons.
+   * Default: en.
+   */
+  language?: DisplayLanguage;
   displayName?: string;
   diffOptions?: DiffOptions;
   prompts?: PromptConfig;
@@ -185,6 +192,7 @@ export function detectGitUser(): string | null {
  * Reads config.json fresh each call so the response reflects the latest file on disk.
  */
 export function getServerConfig(gitUser: string | null): {
+  language?: DisplayLanguage;
   displayName?: string;
   diffOptions?: DiffOptions;
   gitUser?: string;
@@ -193,6 +201,7 @@ export function getServerConfig(gitUser: string | null): {
 } {
   const cfg = loadConfig();
   return {
+    language: cfg.language,
     displayName: cfg.displayName,
     diffOptions: cfg.diffOptions,
     gitUser: gitUser ?? undefined,

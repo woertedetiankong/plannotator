@@ -612,6 +612,7 @@ export function devMockApi(): Plugin {
               const { saveConfig } = await import('@plannotator/shared/config');
               const parsed = JSON.parse(body);
               const toSave: Record<string, unknown> = {};
+              if (parsed.language !== undefined) toSave.language = parsed.language;
               if (parsed.pfmReminder !== undefined) toSave.pfmReminder = parsed.pfmReminder;
               if (Object.keys(toSave).length > 0) saveConfig(toSave as any);
               res.setHeader('Content-Type', 'application/json');
@@ -626,12 +627,14 @@ export function devMockApi(): Plugin {
 
         if (req.url === '/api/plan') {
           res.setHeader('Content-Type', 'application/json');
+          const { getServerConfig } = await import('@plannotator/shared/config');
           res.end(JSON.stringify({
             plan: undefined, // Editor uses its own DIFF_DEMO_PLAN_CONTENT
             origin: 'claude-code',
             previousPlan: PLAN_V2,
             versionInfo: { version: 3, totalVersions: 3, project: 'demo' },
             sharingEnabled: true,
+            serverConfig: getServerConfig(null),
           }));
           return;
         }

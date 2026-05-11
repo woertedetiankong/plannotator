@@ -48,6 +48,7 @@ import { usePinpoint } from '../hooks/usePinpoint';
 import { useAnnotationHighlighter } from '../hooks/useAnnotationHighlighter';
 import { useScrollViewport } from '../hooks/useScrollViewport';
 import { decodeAnchorHash } from '../utils/anchors';
+import { useI18n } from '../i18n';
 
 interface ViewerProps {
   blocks: Block[];
@@ -171,6 +172,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
   onToggleCheckbox,
   checkboxOverrides,
 }, ref) => {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
   const [locationHash, setLocationHash] = useState(() => window.location.hash);
@@ -574,35 +576,35 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
               });
             }}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted rounded-md transition-colors"
-            title="Add global comment"
+            title={t('viewer.addGlobalComment')}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
             </svg>
-            {actionsLabelMode === 'full' && <span>Global comment</span>}
-            {actionsLabelMode === 'short' && <span>Comment</span>}
+            {actionsLabelMode === 'full' && <span>{t('viewer.globalComment')}</span>}
+            {actionsLabelMode === 'short' && <span>{t('viewer.comment')}</span>}
           </button>
 
           {/* Copy plan/file button */}
           <button
             onClick={handleCopyPlan}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted rounded-md transition-colors"
-            title={copied ? 'Copied!' : copyLabel || (linkedDocInfo ? 'Copy file' : 'Copy plan')}
+            title={copied ? t('actions.copied') : copyLabel || (linkedDocInfo ? t('plan.copyFile') : t('viewer.copyPlan'))}
           >
             {copied ? (
               <>
                 <svg className="w-3.5 h-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
-                Copied!
+                {t('actions.copied')}
               </>
             ) : (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                {actionsLabelMode === 'full' && <span>{copyLabel || (linkedDocInfo ? 'Copy file' : 'Copy plan')}</span>}
-                {actionsLabelMode === 'short' && <span>Copy</span>}
+                {actionsLabelMode === 'full' && <span>{copyLabel || (linkedDocInfo ? t('plan.copyFile') : t('viewer.copyPlan'))}</span>}
+                {actionsLabelMode === 'short' && <span>{t('viewer.copy')}</span>}
               </>
             )}
           </button>
@@ -924,5 +926,4 @@ function groupBlocks(blocks: Block[]): RenderGroup[] {
   }
   return groups;
 }
-
 

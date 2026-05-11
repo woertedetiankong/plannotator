@@ -7,6 +7,7 @@ import {
 } from '../utils/annotationHelpers';
 import { CountBadge } from './sidebar/CountBadge';
 import { useScrollViewport } from '../hooks/useScrollViewport';
+import { useI18n } from '../i18n';
 
 interface TableOfContentsProps {
   blocks: Block[];
@@ -148,6 +149,7 @@ export function TableOfContents({
   onLinkedDocBack,
   backLabel,
 }: TableOfContentsProps) {
+  const { t } = useI18n();
   // Calculate annotation counts per section
   const annotationCounts = useMemo(
     () => getAnnotationCountBySection(blocks, annotations),
@@ -203,14 +205,14 @@ export function TableOfContents({
       // managing my own container styling" (e.g. SidebarContainer wrapping
       // us in an OverlayScrollArea), which should NOT trigger the default.
       className={className ?? "bg-card/50 backdrop-blur-sm border-r border-border overflow-y-auto"}
-      aria-label="Table of contents"
+      aria-label={t('plan.tocLabel')}
       style={style}
     >
       <div className="px-3 py-2">
         {linkedDocFilepath && (
           <div className="mb-2 pb-1.5 border-b border-border/50">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium text-primary/80">Viewing</span>
+              <span className="text-[10px] font-medium text-primary/80">{t('plan.viewing')}</span>
               {onLinkedDocBack && (
                 <button
                   onClick={onLinkedDocBack}
@@ -219,7 +221,7 @@ export function TableOfContents({
                   <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                   </svg>
-                  Back to {backLabel || 'plan'}
+                  {t('plan.backToPlanLabel', { label: backLabel || t('plan.plan') })}
                 </button>
               )}
             </div>

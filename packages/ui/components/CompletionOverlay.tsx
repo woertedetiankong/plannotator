@@ -1,4 +1,5 @@
 import { useAutoClose } from '../hooks/useAutoClose';
+import { useI18n } from '../i18n';
 
 // ---------------------------------------------------------------------------
 // Icons
@@ -32,6 +33,7 @@ interface CompletionOverlayProps {
 }
 
 export function CompletionOverlay({ submitted, title, subtitle, agentLabel }: CompletionOverlayProps) {
+  const { t } = useI18n();
   const { state, enableAndStart } = useAutoClose(!!submitted);
 
   if (!submitted) return null;
@@ -58,37 +60,39 @@ export function CompletionOverlay({ submitted, title, subtitle, agentLabel }: Co
           {state.phase === 'counting' ? (
             <>
               <p className="text-sm text-muted-foreground">
-                This tab will close in <span className="text-foreground font-medium">{state.remaining}</span> second
-                {state.remaining !== 1 ? 's' : ''}...
+                {t('completion.tabWillClose', {
+                  seconds: state.remaining,
+                  plural: state.remaining !== 1 ? 's' : '',
+                })}
               </p>
-              <p className="text-xs text-muted-foreground/60">You can change this in Settings.</p>
+              <p className="text-xs text-muted-foreground/60">{t('completion.changeInSettings')}</p>
             </>
           ) : state.phase === 'closeFailed' ? (
             <>
               <p className="text-sm text-muted-foreground">
-                Could not close this tab automatically. Please close it manually.
+                {t('completion.autoCloseFailed')}
               </p>
               <p className="text-xs text-muted-foreground/60">
-                Auto-close works when the tab is opened by {agentLabel}.
+                {t('completion.autoCloseWorksWithAgent', { agent: agentLabel })}
               </p>
             </>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                You can close this tab and return to <span className="text-foreground font-medium">{agentLabel}</span>.
+                {t('completion.closeAndReturnToAgent', { agent: agentLabel })}
               </p>
               {state.phase === 'prompt' ? (
                 <>
                   <label className="flex items-center justify-center gap-2 cursor-pointer group">
                     <input type="checkbox" checked={false} onChange={enableAndStart} className="accent-primary" />
                     <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                      Auto-close this tab after 3 seconds
+                      {t('completion.autoCloseAfterSeconds')}
                     </span>
                   </label>
-                  <p className="text-xs text-muted-foreground/60">You can change the delay in Settings.</p>
+                  <p className="text-xs text-muted-foreground/60">{t('completion.changeDelayInSettings')}</p>
                 </>
               ) : (
-                <p className="text-xs text-muted-foreground/60">Your response has been sent.</p>
+                <p className="text-xs text-muted-foreground/60">{t('completion.responseSent')}</p>
               )}
             </>
           )}

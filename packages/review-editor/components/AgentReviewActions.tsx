@@ -1,5 +1,6 @@
 import React from 'react';
 import { FeedbackButton, ApproveButton, ExitButton } from '@plannotator/ui/components/ToolbarButtons';
+import { useI18n } from '@plannotator/ui/i18n';
 
 interface AgentReviewActionsProps {
   totalAnnotationCount: number;
@@ -31,6 +32,7 @@ export const AgentReviewActions: React.FC<AgentReviewActionsProps> = ({
   onApprove,
   onExit,
 }) => {
+  const { t } = useI18n();
   const busy = isSendingFeedback || isApproving || isExiting;
   const hasAnnotations = totalAnnotationCount > 0;
 
@@ -47,10 +49,10 @@ export const AgentReviewActions: React.FC<AgentReviewActionsProps> = ({
           onClick={onSendFeedback}
           disabled={busy}
           isLoading={isSendingFeedback}
-          label="Send Feedback"
-          shortLabel="Send"
-          loadingLabel="Sending..."
-          title="Send feedback"
+          label={t('actions.sendFeedback')}
+          shortLabel={t('actions.send')}
+          loadingLabel={t('actions.sending')}
+          title={t('actions.sendFeedback')}
         />
       )}
 
@@ -60,7 +62,7 @@ export const AgentReviewActions: React.FC<AgentReviewActionsProps> = ({
           disabled={busy}
           isLoading={isApproving}
           dimmed={totalAnnotationCount > 0}
-          title="Approve - no changes needed"
+          title={t('header.approveNoChanges')}
         />
         {totalAnnotationCount > 0 && (
           <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-xl text-xs text-foreground w-56 text-center opacity-0 invisible group-hover/approve:opacity-100 group-hover/approve:visible transition-all pointer-events-none z-50">

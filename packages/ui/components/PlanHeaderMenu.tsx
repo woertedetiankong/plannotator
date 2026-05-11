@@ -8,6 +8,7 @@ import {
 import { useTheme } from './ThemeProvider';
 import { SunIcon, MoonIcon, SystemIcon } from './icons/themeIcons';
 import { ReviewAgentsIcon } from './ReviewAgentsIcon';
+import { useI18n } from '../i18n';
 
 interface PlanHeaderMenuProps {
   appVersion: string;
@@ -49,6 +50,12 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
   octarineConfigured,
 }) => {
   const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
+  const themeModeLabels = {
+    light: t('menu.theme.light'),
+    dark: t('menu.theme.dark'),
+    system: t('menu.theme.system'),
+  } as const;
 
   const anyNotesAppConfigured =
     isApiMode && (obsidianConfigured || bearConfigured || octarineConfigured);
@@ -63,19 +70,19 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
               ? 'bg-muted text-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
-          title="Options"
-          aria-label="Options"
+          title={t('menu.options')}
+          aria-label={t('menu.options')}
           aria-expanded={isOpen}
         >
           {isOpen ? <CloseIcon /> : <MenuIcon />}
-          <span className="hidden md:inline">Options</span>
+          <span className="hidden md:inline">{t('menu.options')}</span>
         </button>
       )}
     >
       {({ closeMenu }) => (
         <>
           <div className="px-3 py-2 space-y-1.5">
-            <ActionMenuSectionLabel>Theme</ActionMenuSectionLabel>
+            <ActionMenuSectionLabel>{t('menu.theme')}</ActionMenuSectionLabel>
             <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-0.5">
               {(['light', 'dark', 'system'] as const).map((mode) => (
                 <button
@@ -91,7 +98,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                   }`}
                 >
                   {mode === 'light' ? <SunIcon /> : mode === 'dark' ? <MoonIcon /> : <SystemIcon />}
-                  <span className="capitalize">{mode}</span>
+                  <span>{themeModeLabels[mode]}</span>
                 </button>
               ))}
             </div>
@@ -105,7 +112,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
               onOpenSettings();
             }}
             icon={<SettingsIcon />}
-            label="Settings"
+            label={t('menu.settings')}
           />
           <ActionMenuItem
             onClick={() => {
@@ -113,7 +120,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
               onOpenExport();
             }}
             icon={<ExportIcon />}
-            label="Export"
+            label={t('menu.export')}
           />
           {agentInstructionsEnabled && (
             <ActionMenuItem
@@ -122,8 +129,8 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                 onCopyAgentInstructions();
               }}
               icon={<ReviewAgentsIcon />}
-              label="Agent Instructions"
-              subtitle="Copy agent instructions for external annotations"
+              label={t('menu.agentInstructions')}
+              subtitle={t('menu.agentInstructionsSubtitle')}
             />
           )}
 
@@ -135,7 +142,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
               onDownloadAnnotations();
             }}
             icon={<DownloadIcon />}
-            label="Download Annotations"
+            label={t('menu.downloadAnnotations')}
           />
           <ActionMenuItem
             onClick={() => {
@@ -143,8 +150,8 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
               onPrint();
             }}
             icon={<PrintIcon />}
-            label="Print / Save as PDF"
-            subtitle="Choose 'Save as PDF' in the print dialog"
+            label={t('menu.printPdf')}
+            subtitle={t('menu.printPdfSubtitle')}
           />
           {sharingEnabled && (
             <ActionMenuItem
@@ -153,7 +160,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                 onCopyShareLink();
               }}
               icon={<LinkIcon />}
-              label="Copy Share Link"
+              label={t('menu.copyShareLink')}
             />
           )}
           {sharingEnabled && (
@@ -163,7 +170,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                 onOpenImport();
               }}
               icon={<ImportIcon />}
-              label="Import Review"
+              label={t('menu.importReview')}
             />
           )}
 
@@ -177,7 +184,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                     onSaveToObsidian();
                   }}
                   icon={<NoteIcon />}
-                  label="Save to Obsidian"
+                  label={t('menu.saveToObsidian')}
                 />
               )}
               {bearConfigured && (
@@ -187,7 +194,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                     onSaveToBear();
                   }}
                   icon={<NoteIcon />}
-                  label="Save to Bear"
+                  label={t('menu.saveToBear')}
                 />
               )}
               {octarineConfigured && (
@@ -197,7 +204,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                     onSaveToOctarine();
                   }}
                   icon={<NoteIcon />}
-                  label="Save to Octarine"
+                  label={t('menu.saveToOctarine')}
                 />
               )}
             </>
@@ -220,7 +227,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                 onClick={closeMenu}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Release notes
+                {t('menu.releaseNotes')}
               </a>
               <a
                 href="https://github.com/backnotprop/plannotator"
@@ -229,7 +236,7 @@ export const PlanHeaderMenu: React.FC<PlanHeaderMenuProps> = ({
                 onClick={closeMenu}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Project repo
+                {t('menu.projectRepo')}
               </a>
             </div>
           </div>
@@ -293,4 +300,3 @@ const NoteIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
   </svg>
 );
-

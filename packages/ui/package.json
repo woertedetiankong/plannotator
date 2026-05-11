@@ -11,6 +11,8 @@
     "./hooks/*": "./hooks/*.ts",
     "./shortcuts": "./shortcuts/index.ts",
     "./config": "./config/index.ts",
+    "./i18n": "./i18n/index.tsx",
+    "./i18n/*": "./i18n/*.ts",
     "./types": "./types.ts",
     "./theme": "./theme.css"
   },

@@ -12,6 +12,7 @@ import { getBearSettings } from '../utils/bear';
 import { getOctarineSettings } from '../utils/octarine';
 import { wrapFeedbackForAgent } from '../utils/parser';
 import { OverlayScrollArea } from './OverlayScrollArea';
+import { useI18n } from '../i18n';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -57,6 +58,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   isApiMode = false,
   initialTab,
 }) => {
+  const { t } = useI18n();
   const defaultTab = initialTab || (sharingEnabled ? 'share' : 'annotations');
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
   const [copied, setCopied] = useState<'short' | 'full' | 'annotations' | false>(false);
@@ -157,11 +159,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         setSaveStatus(prev => ({ ...prev, [target]: 'success' }));
       } else {
         setSaveStatus(prev => ({ ...prev, [target]: 'error' }));
-        setSaveErrors(prev => ({ ...prev, [target]: result?.error || 'Save failed' }));
+        setSaveErrors(prev => ({ ...prev, [target]: result?.error || t('toast.saveFailed') }));
       }
     } catch {
       setSaveStatus(prev => ({ ...prev, [target]: 'error' }));
-      setSaveErrors(prev => ({ ...prev, [target]: 'Save failed' }));
+      setSaveErrors(prev => ({ ...prev, [target]: t('toast.saveFailed') }));
     }
   };
 
@@ -189,10 +191,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-sm">Export</h3>
+            <h3 className="font-semibold text-sm">{t('export.title')}</h3>
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground">
-                {annotationCount} annotation{annotationCount !== 1 ? 's' : ''}
+                {t('review.annotationCount', { count: annotationCount, plural: annotationCount !== 1 ? 's' : '' })}
               </span>
               <button
                 onClick={onClose}
@@ -221,7 +223,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  Share
+                  {t('export.share')}
                 </button>
               )}
               <button
@@ -232,7 +234,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Annotations
+                {t('export.annotations')}
               </button>
               {showNotesTab && (
                 <button
@@ -243,7 +245,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  Notes
+                  {t('export.notes')}
                 </button>
               )}
             </div>
@@ -256,7 +258,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               {shortShareUrl ? (
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-2">
-                    Share Link
+                    {t('export.shareLink')}
                   </label>
                   <div className="relative group">
                     <input
@@ -274,20 +276,20 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
-                          Copied
+                          {t('actions.copied')}
                         </>
                       ) : (
                         <>
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
-                          Copy
+                          {t('actions.copy')}
                         </>
                       )}
                     </button>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Encrypted short link. Your plan is end-to-end encrypted before it leaves your browser — not even the server can read it.
+                    {t('export.encryptedShortLink')}
                   </p>
                 </div>
               ) : isGeneratingShortUrl ? (
@@ -295,18 +297,18 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4m-3.93 7.07l-2.83-2.83M7.76 7.76L4.93 4.93" />
                   </svg>
-                  Generating short link...
+                  {t('export.generatingShortLink')}
                 </div>
               ) : urlIsLarge && onGenerateShortUrl ? (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                   <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
-                    This URL may be too long for some messaging apps.
+                    {t('export.urlTooLong')}
                   </p>
                   <button
                     onClick={onGenerateShortUrl}
                     className="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                   >
-                    Create short link
+                    {t('export.createShortLink')}
                   </button>
                   {shortUrlError && (
                     <p className="text-[10px] text-amber-500 mt-1">({shortUrlError})</p>
@@ -317,7 +319,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               {/* Full hash URL — always available */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-2">
-                  {shortShareUrl ? 'Full URL (backup)' : 'Shareable URL'}
+                  {shortShareUrl ? t('export.fullUrlBackup') : t('export.shareableUrl')}
                 </label>
                 <div className="relative group">
                   <textarea
@@ -335,14 +337,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
-                        Copied
+                        {t('actions.copied')}
                       </>
                     ) : (
                       <>
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
-                        Copy
+                        {t('actions.copy')}
                       </>
                     )}
                   </button>
@@ -352,19 +354,19 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </div>
                 {!shortShareUrl && !isGeneratingShortUrl && !urlIsLarge && (
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Your plan is encoded entirely in the URL — it never touches a server.
+                    {t('export.urlNeverServer')}
                   </p>
                 )}
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Only someone with this exact link can view your plan. Short links are end-to-end encrypted — the decryption key is in the URL and never sent to the server.
+                {t('export.shortLinksEncrypted')}
               </p>
             </div>
           ) : activeTab === 'notes' && showNotesTab ? (
             <div className="space-y-4">
               <p className="text-xs text-muted-foreground">
-                Save this plan to your notes app without approving or denying.
+                {t('export.savePlanToNotes')}
               </p>
 
               {/* Obsidian */}
@@ -388,13 +390,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                               : 'bg-primary text-primary-foreground hover:opacity-90'
                       }`}
                     >
-                      {saveStatus.obsidian === 'saving' ? 'Saving...'
-                        : saveStatus.obsidian === 'success' ? 'Saved'
-                        : saveStatus.obsidian === 'error' ? 'Failed'
-                        : 'Save'}
+                      {saveStatus.obsidian === 'saving' ? t('common.saving')
+                        : saveStatus.obsidian === 'success' ? t('common.saved')
+                        : saveStatus.obsidian === 'error' ? t('common.failed')
+                        : t('actions.save')}
                     </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Not configured</span>
+                    <span className="text-xs text-muted-foreground">{t('export.notConfigured')}</span>
                   )}
                 </div>
                 {isObsidianReady && (
@@ -404,7 +406,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 )}
                 {!isObsidianReady && (
                   <div className="text-[10px] text-muted-foreground/70">
-                    Enable in Settings &gt; Saving &gt; Obsidian
+                    {t('export.enableInSettingsPath', { app: 'Obsidian' })}
                   </div>
                 )}
                 {saveErrors.obsidian && (
@@ -433,18 +435,18 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                               : 'bg-primary text-primary-foreground hover:opacity-90'
                       }`}
                     >
-                      {saveStatus.bear === 'saving' ? 'Saving...'
-                        : saveStatus.bear === 'success' ? 'Saved'
-                        : saveStatus.bear === 'error' ? 'Failed'
-                        : 'Save'}
+                      {saveStatus.bear === 'saving' ? t('common.saving')
+                        : saveStatus.bear === 'success' ? t('common.saved')
+                        : saveStatus.bear === 'error' ? t('common.failed')
+                        : t('actions.save')}
                     </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Not configured</span>
+                    <span className="text-xs text-muted-foreground">{t('export.notConfigured')}</span>
                   )}
                 </div>
                 {!isBearReady && (
                   <div className="text-[10px] text-muted-foreground/70">
-                    Enable in Settings &gt; Saving &gt; Bear
+                    {t('export.enableInSettingsPath', { app: 'Bear' })}
                   </div>
                 )}
                 {saveErrors.bear && (
@@ -473,13 +475,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                               : 'bg-primary text-primary-foreground hover:opacity-90'
                       }`}
                     >
-                      {saveStatus.octarine === 'saving' ? 'Saving...'
-                        : saveStatus.octarine === 'success' ? 'Saved'
-                        : saveStatus.octarine === 'error' ? 'Failed'
-                        : 'Save'}
+                      {saveStatus.octarine === 'saving' ? t('common.saving')
+                        : saveStatus.octarine === 'success' ? t('common.saved')
+                        : saveStatus.octarine === 'error' ? t('common.failed')
+                        : t('actions.save')}
                     </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Not configured</span>
+                    <span className="text-xs text-muted-foreground">{t('export.notConfigured')}</span>
                   )}
                 </div>
                 {isOctarineReady && (
@@ -489,7 +491,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 )}
                 {!isOctarineReady && (
                   <div className="text-[10px] text-muted-foreground/70">
-                    Enable in Settings &gt; Saving &gt; Octarine
+                    {t('export.enableInSettingsPath', { app: 'Octarine' })}
                   </div>
                 )}
                 {saveErrors.octarine && (
@@ -505,7 +507,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     disabled={saveStatus.obsidian === 'saving' || saveStatus.bear === 'saving' || saveStatus.octarine === 'saving'}
                     className="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
-                    Save All
+                    {t('export.saveAll')}
                   </button>
                 </div>
               )}
@@ -525,13 +527,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               onClick={handleCopyAnnotations}
               className="px-3 py-1.5 rounded-md text-xs font-medium bg-muted hover:bg-muted/80 transition-colors"
             >
-              {copied === 'annotations' ? 'Copied!' : 'Copy'}
+              {copied === 'annotations' ? t('actions.copied') : t('actions.copy')}
             </button>
             <button
               onClick={handleDownloadAnnotations}
               className="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
-              Download Annotations
+              {t('menu.downloadAnnotations')}
             </button>
           </div>
         )}

@@ -7,6 +7,7 @@ import {
 } from '@plannotator/ui/components/ActionMenu';
 import { useTheme } from '@plannotator/ui/components/ThemeProvider';
 import { modKey } from '@plannotator/ui/utils/platform';
+import { useI18n } from '@plannotator/ui/i18n';
 
 interface ReviewHeaderMenuProps {
   onOpenSettings: () => void;
@@ -28,6 +29,11 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
   appVersion,
 }) => {
   const { theme, resolvedMode, setTheme } = useTheme();
+  const { t } = useI18n();
+  const themeModeLabels = {
+    light: t('menu.theme.light'),
+    dark: t('menu.theme.dark'),
+  } as const;
   const activeTheme = useMemo<'light' | 'dark'>(() => {
     return theme === 'system' ? resolvedMode : theme;
   }, [resolvedMode, theme]);
@@ -42,19 +48,19 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
               ? 'bg-muted text-foreground'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
-          title="Options"
-          aria-label="Options"
+          title={t('menu.options')}
+          aria-label={t('menu.options')}
           aria-expanded={isOpen}
         >
           {isOpen ? <CloseIcon /> : <MenuIcon />}
-          <span className="hidden md:inline">Options</span>
+          <span className="hidden md:inline">{t('menu.options')}</span>
         </button>
       )}
     >
       {({ closeMenu }) => (
         <>
           <div className="px-3 py-2 space-y-1.5">
-            <ActionMenuSectionLabel>Theme</ActionMenuSectionLabel>
+            <ActionMenuSectionLabel>{t('menu.theme')}</ActionMenuSectionLabel>
             <div className="flex items-center gap-1 rounded-lg bg-muted/50 p-0.5">
               {(['light', 'dark'] as const).map((mode) => (
                 <button
@@ -70,7 +76,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
                   }`}
                 >
                   {mode === 'light' ? <SunIcon /> : <MoonIcon />}
-                  <span className="capitalize">{mode}</span>
+                  <span>{themeModeLabels[mode]}</span>
                 </button>
               ))}
             </div>
@@ -84,7 +90,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
               onOpenSettings();
             }}
             icon={<SettingsIcon />}
-            label="Settings"
+            label={t('menu.settings')}
           />
           <ActionMenuItem
             onClick={() => {
@@ -92,7 +98,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
               onOpenExport();
             }}
             icon={<ExportIcon />}
-            label="Export"
+            label={t('menu.export')}
           />
 
           <ActionMenuDivider />
@@ -103,7 +109,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
               onToggleFileTree();
             }}
             icon={<FileTreeMenuIcon />}
-            label={isFileTreeOpen ? 'Hide File Tree' : 'Show File Tree'}
+            label={isFileTreeOpen ? t('menu.hideFileTree') : t('menu.showFileTree')}
             badge={<KbdHint keys={[modKey, 'B']} />}
           />
           <ActionMenuItem
@@ -112,7 +118,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
               onToggleSidebar();
             }}
             icon={<SidebarIcon />}
-            label={isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
+            label={isSidebarOpen ? t('menu.hideSidebar') : t('menu.showSidebar')}
             badge={<KbdHint keys={[modKey, '.']} />}
           />
 
@@ -133,7 +139,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
                 onClick={closeMenu}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Release notes
+                {t('menu.releaseNotes')}
               </a>
               <a
                 href="https://github.com/backnotprop/plannotator"
@@ -142,7 +148,7 @@ export const ReviewHeaderMenu: React.FC<ReviewHeaderMenuProps> = ({
                 onClick={closeMenu}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Project repo
+                {t('menu.projectRepo')}
               </a>
             </div>
           </div>

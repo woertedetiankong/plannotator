@@ -82,6 +82,7 @@ const DEMO_PLAN_CONTENT = USE_DIFF_DEMO
   : DEFAULT_DEMO_PLAN_CONTENT;
 import { useCheckboxOverrides } from './hooks/useCheckboxOverrides';
 import { AppHeader } from './components/AppHeader';
+import { I18nProvider, useI18n } from '@plannotator/ui/i18n';
 
 type NoteAutoSaveResults = {
   obsidian?: boolean;
@@ -89,7 +90,8 @@ type NoteAutoSaveResults = {
   octarine?: boolean;
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { t } = useI18n();
   const [markdown, setMarkdown] = useState(DEMO_PLAN_CONTENT);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [codeAnnotations, setCodeAnnotations] = useState<CodeAnnotation[]>([]);
@@ -708,7 +710,7 @@ const App: React.FC = () => {
         if (!res.ok) throw new Error('Not in API mode');
         return res.json();
       })
-      .then((data: { plan: string; origin?: Origin; mode?: 'annotate' | 'annotate-last' | 'annotate-folder' | 'archive'; filePath?: string; sourceInfo?: string; sourceConverted?: boolean; gate?: boolean; sharingEnabled?: boolean; shareBaseUrl?: string; pasteApiUrl?: string; repoInfo?: { display: string; branch?: string; host?: string }; previousPlan?: string | null; versionInfo?: { version: number; totalVersions: number; project: string }; archivePlans?: ArchivedPlan[]; projectRoot?: string; isWSL?: boolean; serverConfig?: { displayName?: string; gitUser?: string } }) => {
+      .then((data: { plan: string; origin?: Origin; mode?: 'annotate' | 'annotate-last' | 'annotate-folder' | 'archive'; filePath?: string; sourceInfo?: string; sourceConverted?: boolean; gate?: boolean; sharingEnabled?: boolean; shareBaseUrl?: string; pasteApiUrl?: string; repoInfo?: { display: string; branch?: string; host?: string }; previousPlan?: string | null; versionInfo?: { version: number; totalVersions: number; project: string }; archivePlans?: ArchivedPlan[]; projectRoot?: string; isWSL?: boolean; serverConfig?: { language?: string; displayName?: string; gitUser?: string } }) => {
         // Initialize config store with server-provided values (config file > cookie > default)
         configStore.init(data.serverConfig);
         // gitUser drives the "Use git name" button in Settings; stays undefined (button hidden) when unavailable
@@ -859,16 +861,16 @@ const App: React.FC = () => {
 
         const failed = targets.filter(t => !data.results?.[t.toLowerCase()]?.success);
         if (failed.length === 0) {
-          toast.success(`Auto-saved to ${targets.join(' & ')}`);
+          toast.success(t('toast.autoSavedTo', { targets: targets.join(' & ') }));
         } else {
-          toast.error(`Auto-save failed for ${failed.join(' & ')}`);
+          toast.error(t('toast.autoSaveFailedFor', { targets: failed.join(' & ') }));
         }
 
         return results;
       })
       .catch(() => {
         autoSaveResultsRef.current = {};
-        toast.error('Auto-save failed');
+        toast.error(t('toast.autoSaveFailed'));
         return {};
       });
     autoSavePromiseRef.current = autoSavePromise;
@@ -1359,7 +1361,7 @@ const App: React.FC = () => {
     a.download = 'annotations.md';
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Downloaded annotations');
+    toast.success(t('toast.downloadedAnnotations'));
   };
 
   const handleQuickSaveToNotes = async (target: 'obsidian' | 'bear' | 'octarine') => {
@@ -1405,12 +1407,12 @@ const App: React.FC = () => {
       const data = await res.json();
       const result = data.results?.[target];
       if (result?.success) {
-        toast.success(`Saved to ${targetName}`);
+        toast.success(t('toast.savedTo', { target: targetName }));
       } else {
-        toast.error(result?.error || 'Save failed');
+        toast.error(result?.error || t('toast.saveFailed'));
       }
     } catch {
-      toast.error('Save failed');
+      toast.error(t('toast.saveFailed'));
     }
   };
 
@@ -1422,18 +1424,18 @@ const App: React.FC = () => {
     const payload = buildPlanAgentInstructions(window.location.origin);
     try {
       await navigator.clipboard.writeText(payload);
-      toast.success('Agent instructions copied');
+      toast.success(t('toast.agentInstructionsCopied'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(t('toast.failedToCopy'));
     }
   };
 
   const handleCopyShareLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success('Share link copied');
+      toast.success(t('toast.shareLinkCopied'));
     } catch {
-      toast.error('Failed to copy');
+      toast.error(t('toast.failedToCopy'));
     }
   };
 
@@ -1750,10 +1752,13 @@ const App: React.FC = () => {
               isOpen={!!draftBanner}
               onClose={dismissDraft}
               onConfirm={handleRestoreDraft}
-              title="Draft Recovered"
-              message={draftBanner ? `Found ${draftBanner.count} annotation${draftBanner.count !== 1 ? 's' : ''} from ${draftBanner.timeAgo}. Would you like to restore them?` : ''}
-              confirmText="Restore"
-              cancelText="Dismiss"
+              title={t('review.draftRecovered')}
+              message={draftBanner ? t('review.draftRecoveredMessage', {
+                items: t('review.annotationCount', { count: draftBanner.count, plural: draftBanner.count === 1 ? '' : 's' }),
+                timeAgo: draftBanner.timeAgo,
+              }) : ''}
+              confirmText={t('actions.restore')}
+              cancelText={t('actions.dismiss')}
               showCancel
             />
             <div ref={planAreaRef} className="min-h-full flex flex-col items-center px-2 py-3 md:px-10 md:py-8 xl:px-16 relative z-10">
@@ -1819,8 +1824,8 @@ const App: React.FC = () => {
               {annotateSource === 'folder' && !markdown && !linkedDocHook.isActive && (
                 <div className="w-full flex justify-center">
                   <div className="w-full max-w-3xl p-12 text-center text-muted-foreground">
-                    <p className="text-lg font-medium mb-2">Select a file to annotate</p>
-                    <p className="text-sm">Pick a markdown file from the sidebar to begin.</p>
+                    <p className="text-lg font-medium mb-2">{t('plan.selectFileToAnnotate')}</p>
+                    <p className="text-sm">{t('plan.folderPickFile')}</p>
                   </div>
                 </div>
               )}
@@ -1885,10 +1890,10 @@ const App: React.FC = () => {
                   maxWidth={annotateReaderMaxWidth}
                   onOpenLinkedDoc={handleOpenLinkedDoc}
                   onOpenCodeFile={codeFilePopout.open}
-                  linkedDocInfo={linkedDocHook.isActive ? { filepath: linkedDocHook.filepath!, onBack: handleLinkedDocBack, label: fileBrowser.dirs.find(d => d.path === fileBrowser.activeDirPath)?.isVault ? 'Vault File' : fileBrowser.activeFile ? 'File' : undefined, backLabel } : null}
+                  linkedDocInfo={linkedDocHook.isActive ? { filepath: linkedDocHook.filepath!, onBack: handleLinkedDocBack, label: fileBrowser.dirs.find(d => d.path === fileBrowser.activeDirPath)?.isVault ? t('plan.vaultFile') : fileBrowser.activeFile ? t('plan.file') : undefined, backLabel } : null}
                   imageBaseDir={imageBaseDir}
                   codePathBaseDir={activeDocBaseDir}
-                  copyLabel={annotateSource === 'message' ? 'Copy message' : annotateSource === 'file' || annotateSource === 'folder' ? 'Copy file' : undefined}
+                  copyLabel={annotateSource === 'message' ? t('plan.copyMessage') : annotateSource === 'file' || annotateSource === 'folder' ? t('plan.copyFile') : undefined}
                   archiveInfo={archive.currentInfo}
                   sourceInfo={sourceInfo}
                   onToggleCheckbox={checkbox.toggle}
@@ -1977,8 +1982,8 @@ const App: React.FC = () => {
         <ConfirmDialog
           isOpen={showFeedbackPrompt}
           onClose={() => setShowFeedbackPrompt(false)}
-          title="Add Annotations First"
-          message={`To provide feedback, select text in the plan and add annotations. ${agentName} will use your annotations to revise the plan.`}
+          title={t('plan.addAnnotationsFirst')}
+          message={t('plan.addAnnotationsFirstMessage', { agent: agentName })}
           variant="info"
         />
 
@@ -1990,21 +1995,25 @@ const App: React.FC = () => {
             setShowClaudeCodeWarning(false);
             handleApprove();
           }}
-          title="Annotations Won't Be Sent"
-          message={<>{agentName} doesn't yet support feedback on approval. Your {allAnnotations.length + codeAnnotations.length} annotation{(allAnnotations.length + codeAnnotations.length) !== 1 ? 's' : ''} will be lost.</>}
+          title={t('review.annotationsWontBeSent')}
+          message={t('plan.annotationsLostApprovalUnsupported', {
+            agent: agentName,
+            count: allAnnotations.length + codeAnnotations.length,
+            plural: (allAnnotations.length + codeAnnotations.length) === 1 ? '' : 's',
+          })}
           subMessage={
             <>
-              To send feedback, use <strong>Send Feedback</strong> instead.
+              {t('plan.sendFeedbackInstead')}
               <br /><br />
-              Want this feature? Upvote these issues:
+              {t('plan.wantFeatureUpvote')}
               <br />
               <a href="https://github.com/anthropics/claude-code/issues/16001" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">#16001</a>
               {' · '}
               <a href="https://github.com/anthropics/claude-code/issues/15755" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">#15755</a>
             </>
           }
-          confirmText="Approve Anyway"
-          cancelText="Cancel"
+          confirmText={t('actions.approveAnyway')}
+          cancelText={t('actions.cancel')}
           variant="warning"
           showCancel
         />
@@ -2018,11 +2027,15 @@ const App: React.FC = () => {
             if (exitWarningAction === 'approve') handleAnnotateApprove();
             else handleAnnotateExit();
           }}
-          title="Annotations Won't Be Sent"
-          message={<>You have {feedbackAnnotationCount} annotation{feedbackAnnotationCount !== 1 ? 's' : ''} that will be lost if you {exitWarningAction === 'approve' ? 'approve' : 'close'}.</>}
-          subMessage="To send your annotations, use Send Annotations instead."
-          confirmText={exitWarningAction === 'approve' ? 'Approve Anyway' : 'Close Anyway'}
-          cancelText="Cancel"
+          title={t('review.annotationsWontBeSent')}
+          message={t('plan.annotationsLostAction', {
+            count: feedbackAnnotationCount,
+            plural: feedbackAnnotationCount === 1 ? '' : 's',
+            action: exitWarningAction === 'approve' ? t('actions.approve').toLowerCase() : t('actions.close').toLowerCase(),
+          })}
+          subMessage={t('plan.sendAnnotationsInstead')}
+          confirmText={exitWarningAction === 'approve' ? t('actions.approveAnyway') : t('actions.closeAnyway')}
+          cancelText={t('actions.cancel')}
           variant="warning"
           showCancel
         />
@@ -2035,15 +2048,15 @@ const App: React.FC = () => {
             setShowAgentWarning(false);
             handleApprove();
           }}
-          title="Agent Not Found"
+          title={t('plan.agentNotFound')}
           message={agentWarningMessage}
           subMessage={
             <>
-              You can change the agent in <strong>Settings</strong>, or approve anyway and OpenCode will use the default agent.
+              {t('plan.agentNotFoundMessage')}
             </>
           }
-          confirmText="Approve Anyway"
-          cancelText="Cancel"
+          confirmText={t('actions.approveAnyway')}
+          cancelText={t('actions.cancel')}
           variant="warning"
           showCancel
         />
@@ -2052,9 +2065,9 @@ const App: React.FC = () => {
         <ConfirmDialog
           isOpen={!!shareLoadError && !isApiMode}
           onClose={clearShareLoadError}
-          title="Shared Plan Could Not Be Loaded"
+          title={t('plan.sharedPlanLoadFailed')}
           message={shareLoadError}
-          subMessage="You are viewing a demo plan. This is sample content — it is not your data or anyone else's."
+          subMessage={t('plan.sharedPlanDemoFallback')}
           variant="warning"
         />
 
@@ -2080,25 +2093,32 @@ const App: React.FC = () => {
         <CompletionOverlay
           submitted={submitted}
           title={
-            archive.archiveMode ? 'Archive Closed'
-            : submitted === 'exited' ? 'Session Closed'
+            archive.archiveMode ? t('completion.archiveClosed')
+            : submitted === 'exited' ? t('completion.sessionClosed')
             : submitted === 'approved'
-              ? (annotateMode ? 'Approved' : 'Plan Approved')
-              : annotateMode ? 'Annotations Sent'
-            : 'Feedback Sent'
+              ? (annotateMode ? t('completion.approved') : t('completion.planApproved'))
+              : annotateMode ? t('completion.annotationsSent')
+            : t('completion.feedbackSent')
           }
           subtitle={
             submitted === 'exited'
-              ? 'Annotation session closed without feedback.'
+              ? t('completion.annotationSessionClosed')
               : archive.archiveMode
-                ? 'You can reopen with plannotator archive.'
+                ? t('completion.archiveReopen')
                 : submitted === 'approved'
                   ? (annotateMode
-                      ? `${agentName} will proceed.`
-                      : `${agentName} will proceed with the implementation.`)
+                      ? t('completion.agentWillProceed', { agent: agentName })
+                      : t('completion.agentWillImplement', { agent: agentName }))
                   : annotateMode
-                    ? `${agentName} will address your annotations on the ${annotateSource === 'message' ? 'message' : annotateSource === 'folder' ? 'files' : 'file'}.`
-                    : `${agentName} will revise the plan based on your annotations.`
+                    ? t('completion.agentWillAddressAnnotations', {
+                        agent: agentName,
+                        target: annotateSource === 'message'
+                          ? t('completion.target.message')
+                          : annotateSource === 'folder'
+                            ? t('completion.target.files')
+                            : t('completion.target.file'),
+                      })
+                    : t('completion.agentWillRevise', { agent: agentName })
           }
           agentLabel={agentName}
         />
@@ -2128,5 +2148,11 @@ const App: React.FC = () => {
     </ThemeProvider>
   );
 };
+
+const App: React.FC = () => (
+  <I18nProvider>
+    <AppContent />
+  </I18nProvider>
+);
 
 export default App;

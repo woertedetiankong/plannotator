@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { type Origin, getAgentName } from '@plannotator/shared/agents';
 import { ThemeProvider, useTheme } from '@plannotator/ui/components/ThemeProvider';
+import { I18nProvider, useI18n } from '@plannotator/ui/i18n';
 import { TooltipProvider } from '@plannotator/ui/components/Tooltip';
 import { ConfirmDialog } from '@plannotator/ui/components/ConfirmDialog';
 import { Settings } from '@plannotator/ui/components/Settings';
@@ -128,7 +129,8 @@ function getFileTabTitle(filePath: string): string {
   return filePath.split('/').pop() ?? filePath;
 }
 
-const ReviewApp: React.FC = () => {
+const ReviewAppContent: React.FC = () => {
+  const { t } = useI18n();
   const { resolvedMode } = useTheme();
   const [diffData, setDiffData] = useState<DiffData | null>(null);
   const [files, setFiles] = useState<DiffFile[]>([]);
@@ -173,7 +175,7 @@ const ReviewApp: React.FC = () => {
 
   const reviewSidebar = useSidebar<ReviewSidebarTab>(true, 'annotations');
   const [isFileTreeOpen, setIsFileTreeOpen] = useState(true);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<'copied' | 'copy-failed' | 'send-failed' | null>(null);
   const [copyRawDiffStatus, setCopyRawDiffStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [viewedFiles, setViewedFiles] = useState<Set<string>>(new Set());
   const [hideViewedFiles, setHideViewedFiles] = useState(false);
@@ -738,7 +740,7 @@ const ReviewApp: React.FC = () => {
         viewedFiles?: string[];
         error?: string;
         isWSL?: boolean;
-        serverConfig?: { displayName?: string; gitUser?: string };
+        serverConfig?: { language?: string; displayName?: string; gitUser?: string };
       }) => {
         // Initialize config store with server-provided values (config file > cookie > default)
         configStore.init(data.serverConfig);
@@ -1401,11 +1403,11 @@ const ReviewApp: React.FC = () => {
     try {
       const feedback = exportReviewFeedback(allAnnotations, prMetadata, feedbackDiffContext, prReviewScopeLabel);
       await navigator.clipboard.writeText(feedback);
-      setCopyFeedback('Feedback copied!');
+      setCopyFeedback('copied');
       setTimeout(() => setCopyFeedback(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
-      setCopyFeedback('Failed to copy');
+      setCopyFeedback('copy-failed');
       setTimeout(() => setCopyFeedback(null), 2000);
     }
   }, [allAnnotations, prMetadata, feedbackDiffContext, prReviewScopeLabel]);
@@ -1448,7 +1450,7 @@ const ReviewApp: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to send feedback:', err);
-      setCopyFeedback('Failed to send');
+      setCopyFeedback('send-failed');
       setTimeout(() => setCopyFeedback(null), 2000);
       setIsSendingFeedback(false);
     }
@@ -1490,7 +1492,7 @@ const ReviewApp: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to approve:', err);
-      setCopyFeedback('Failed to send');
+      setCopyFeedback('send-failed');
       setTimeout(() => setCopyFeedback(null), 2000);
       setIsApproving(false);
     }
@@ -1694,11 +1696,48 @@ const ReviewApp: React.FC = () => {
     handleApprove, handleSendFeedback, handlePlatformAction
   ]);
 
+  const formatAnnotationCount = (count: number) =>
+    t('review.annotationCount', { count, plural: count === 1 ? '' : 's' });
+  const formatViewedFileCount = (count: number) =>
+    t('review.viewedFileCount', { count, plural: count === 1 ? '' : 's' });
+  const worktreeLocation = activeWorktreePath ? t('review.worktreeLocation') : '';
+  const repositoryLocation = activeWorktreePath ? t('review.worktreeLocation') : t('review.repositoryLocation');
+  const emptyDiffMessage = (() => {
+    switch (activeDiffBase) {
+      case 'uncommitted':
+        return t('review.diff.noUncommitted', { location: worktreeLocation });
+      case 'staged':
+        return t('review.diff.noStaged');
+      case 'unstaged':
+        return t('review.diff.noUnstaged');
+      case 'last-commit':
+        return t('review.diff.noLastCommit', { location: worktreeLocation });
+      case 'jj-current':
+        return t('review.diff.noJjCurrent');
+      case 'jj-last':
+        return t('review.diff.noJjLast');
+      case 'jj-line':
+        return t('review.diff.noJjLine', { base: selectedBase || gitContext?.defaultBranch || '@-' });
+      case 'jj-all':
+        return t('review.diff.noJjAll');
+      case 'branch':
+      case 'merge-base':
+        return t('review.diff.noBranch', {
+          base: selectedBase || gitContext?.defaultBranch || 'main',
+          location: worktreeLocation,
+        });
+      case 'all':
+        return t('review.diff.noAll', { location: repositoryLocation });
+      default:
+        return '';
+    }
+  })();
+
   if (isLoading) {
     return (
       <ThemeProvider defaultTheme="dark">
         <div className="h-screen flex items-center justify-center bg-background">
-          <div className="text-muted-foreground text-sm">Loading diff...</div>
+          <div className="text-muted-foreground text-sm">{t('review.diff.loading')}</div>
         </div>
       </ThemeProvider>
     );
@@ -1723,7 +1762,7 @@ const ReviewApp: React.FC = () => {
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
-                  title={isFileTreeOpen ? 'Hide file tree' : 'Show file tree'}
+                  title={isFileTreeOpen ? t('review.fileTree.hide') : t('review.fileTree.show')}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -1759,13 +1798,13 @@ const ReviewApp: React.FC = () => {
                   onNavigatePR={handlePRSwitch}
                 />
                 <div className="hidden md:flex items-center gap-0.5 ml-1">
-                  <button onClick={() => handleOpenPRPanel('summary')} className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors duration-150" title="PR Summary">
+                  <button onClick={() => handleOpenPRPanel('summary')} className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors duration-150" title={t('review.prSummary')}>
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   </button>
-                  <button onClick={() => handleOpenPRPanel('comments')} className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors duration-150" title="PR Comments">
+                  <button onClick={() => handleOpenPRPanel('comments')} className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors duration-150" title={t('review.prComments')}>
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                   </button>
-                  <button onClick={() => handleOpenPRPanel('checks')} className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors duration-150" title="PR Checks">
+                  <button onClick={() => handleOpenPRPanel('checks')} className="p-1 rounded text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors duration-150" title={t('review.prChecks')}>
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </button>
                 </div>
@@ -1789,7 +1828,7 @@ const ReviewApp: React.FC = () => {
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-muted-foreground/70">Review</span>
+              <span className="text-xs text-muted-foreground/70">{t('review.review')}</span>
             )}
           </div>
 
@@ -1804,7 +1843,7 @@ const ReviewApp: React.FC = () => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Split
+                {t('settings.option.split')}
               </button>
               <button
                 onClick={() => handleDiffStyleChange('unified')}
@@ -1814,7 +1853,7 @@ const ReviewApp: React.FC = () => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Unified
+                {t('settings.option.unified')}
               </button>
             </div>
 
@@ -1826,14 +1865,14 @@ const ReviewApp: React.FC = () => {
                     <button
                       onClick={() => setShowDestinationMenu(prev => !prev)}
                       className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-muted hover:bg-muted/80 transition-colors"
-                      title={reviewDestination === 'platform' ? `Posting to ${platformLabel} ${mrLabel}` : 'Sending to agent session'}
+                      title={reviewDestination === 'platform' ? t('review.postToMr', { mrLabel: `${platformLabel} ${mrLabel}` }) : t('review.sendToSession')}
                     >
                       {reviewDestination === 'platform' ? (
                         <>
                           {prMetadata?.platform === 'gitlab' ? <GitLabIcon className="w-3.5 h-3.5" /> : <GitHubIcon className="w-3.5 h-3.5" />}
                           <span>{platformLabel}</span>
                         </>
-                      ) : 'Agent'}
+                      ) : t('review.agent')}
                       <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                       </svg>
@@ -1856,7 +1895,7 @@ const ReviewApp: React.FC = () => {
                             }`}
                           >
                             <div className="font-medium">{platformLabel}</div>
-                            <div className="text-muted-foreground/60">Post to {mrLabel}</div>
+                            <div className="text-muted-foreground/60">{t('review.postToMr', { mrLabel })}</div>
                           </button>
                           <button
                             onClick={() => {
@@ -1871,14 +1910,14 @@ const ReviewApp: React.FC = () => {
                                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                             }`}
                           >
-                            <div className="font-medium">Agent</div>
-                            <div className="text-muted-foreground/60">Send to session</div>
+                            <div className="font-medium">{t('review.agent')}</div>
+                            <div className="text-muted-foreground/60">{t('review.sendToSession')}</div>
                           </button>
                           <div className="border-t border-border/50 mt-1 pt-1 px-3 py-1">
                             <span className="text-[10px] text-muted-foreground/40">
                               <kbd className="inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded bg-muted border border-border/60 border-b-[2px] text-[9px] font-mono leading-none text-foreground/60 shadow-sm">{altKey}</kbd>
                               <kbd className="inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded bg-muted border border-border/60 border-b-[2px] text-[9px] font-mono leading-none text-foreground/60 shadow-sm ml-0.5">{altKey}</kbd>
-                              <span className="ml-1.5">to toggle</span>
+                              <span className="ml-1.5">{t('review.toToggle')}</span>
                             </span>
                           </div>
                         </div>
@@ -1920,11 +1959,11 @@ const ReviewApp: React.FC = () => {
                       onClick={() => openPlatformDialog('comment')}
                       disabled={isSendingFeedback || isApproving || isPlatformActioning}
                       isLoading={isSendingFeedback || isPlatformActioning}
-                      label="Post Comments"
-                      shortLabel="Post"
-                      loadingLabel="Posting..."
-                      shortLoadingLabel="Posting..."
-                      title="Post review to platform"
+                      label={t('actions.postComments')}
+                      shortLabel={t('actions.post')}
+                      loadingLabel={t('actions.posting')}
+                      shortLoadingLabel={t('actions.posting')}
+                      title={t('review.postReviewToPlatform')}
                     />
                     <div className="relative group/approve">
                       <ApproveButton
@@ -1940,15 +1979,18 @@ const ReviewApp: React.FC = () => {
                         muted={!!platformUser && prMetadata?.author === platformUser && !isSendingFeedback && !isApproving && !isPlatformActioning}
                         title={
                           platformUser && prMetadata?.author === platformUser
-                            ? `You can't approve your own ${mrLabel}`
-                            : "Approve - no changes needed"
+                            ? t('review.cannotApproveOwn', { mrLabel })
+                            : t('review.approveNoChangesNeeded')
                         }
                       />
                       {platformUser && prMetadata?.author === platformUser && (
                         <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-xl text-xs text-foreground w-48 text-center opacity-0 invisible group-hover/approve:opacity-100 group-hover/approve:visible transition-all pointer-events-none z-50">
                           <div className="absolute bottom-full right-4 border-4 border-transparent border-b-border" />
                           <div className="absolute bottom-full right-4 mt-px border-4 border-transparent border-b-popover" />
-                          You can't approve your own {mrLabel === 'MR' ? 'merge request' : 'pull request'} on {platformLabel}.
+                          {t('review.cannotApproveOwnFull', {
+                            requestType: mrLabel === 'MR' ? t('review.mergeRequest') : t('review.pullRequest'),
+                            platform: platformLabel,
+                          })}
                         </div>
                       )}
                     </div>
@@ -1959,21 +2001,21 @@ const ReviewApp: React.FC = () => {
               <button
                 onClick={handleCopyFeedback}
                 className="px-2 py-1 md:px-2.5 rounded-md text-xs font-medium bg-muted hover:bg-muted/80 transition-colors flex items-center gap-1.5"
-                title="Copy feedback for LLM"
+                title={t('review.copyFeedbackForLlm')}
               >
-                {copyFeedback === 'Feedback copied!' ? (
+                {copyFeedback === 'copied' ? (
                   <>
                     <svg className="w-3.5 h-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="hidden md:inline">Copied!</span>
+                    <span className="hidden md:inline">{t('actions.copied')}</span>
                   </>
                 ) : (
                   <>
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span className="hidden md:inline">Copy Feedback</span>
+                    <span className="hidden md:inline">{t('review.copyFeedback')}</span>
                   </>
                 )}
               </button>
@@ -2001,7 +2043,7 @@ const ReviewApp: React.FC = () => {
                   ? 'bg-primary/15 text-primary'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
-              title="Annotations"
+              title={t('review.annotations')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -2020,7 +2062,7 @@ const ReviewApp: React.FC = () => {
                     ? 'bg-primary/15 text-primary'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
-                title="AI Chat"
+                title={t('review.aiChat')}
               >
                 <SparklesIcon className="w-4 h-4" />
                 {aiChat.messages.length > 0 && !(reviewSidebar.isOpen && reviewSidebar.activeTab === 'ai') && (
@@ -2036,7 +2078,7 @@ const ReviewApp: React.FC = () => {
                     ? 'bg-primary/15 text-primary'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
-                title="Review Agents"
+                title={t('review.reviewAgents')}
               >
                 <ReviewAgentsIcon className="w-4 h-4" />
                 {agentJobs.jobs.some(j => j.status === 'running' || j.status === 'starting') && !(reviewSidebar.isOpen && reviewSidebar.activeTab === 'agents') && (
@@ -2108,15 +2150,18 @@ const ReviewApp: React.FC = () => {
               isOpen={!!draftBanner}
               onClose={dismissDraft}
               onConfirm={handleRestoreDraft}
-              title="Draft Recovered"
+              title={t('review.draftRecovered')}
               message={draftBanner ? (() => {
                 const parts: string[] = [];
-                if (draftBanner.count > 0) parts.push(`${draftBanner.count} annotation${draftBanner.count !== 1 ? 's' : ''}`);
-                if (draftBanner.viewedCount > 0) parts.push(`${draftBanner.viewedCount} viewed file${draftBanner.viewedCount !== 1 ? 's' : ''}`);
-                return `Found ${parts.join(' and ')} from ${draftBanner.timeAgo}. Would you like to restore them?`;
+                if (draftBanner.count > 0) parts.push(formatAnnotationCount(draftBanner.count));
+                if (draftBanner.viewedCount > 0) parts.push(formatViewedFileCount(draftBanner.viewedCount));
+                return t('review.draftRecoveredMessage', {
+                  items: parts.join(` ${t('common.and')} `),
+                  timeAgo: draftBanner.timeAgo,
+                });
               })() : ''}
-              confirmText="Restore"
-              cancelText="Dismiss"
+              confirmText={t('actions.restore')}
+              cancelText={t('actions.dismiss')}
               showCancel
             />
             {files.length > 0 ? (
@@ -2144,31 +2189,21 @@ const ReviewApp: React.FC = () => {
                   <div>
                     {diffError ? (
                       <>
-                        <h3 className="text-sm font-medium text-destructive">Failed to load diff</h3>
+                        <h3 className="text-sm font-medium text-destructive">{t('review.diff.failedToLoad')}</h3>
                         <p className="text-xs text-muted-foreground mt-1 max-w-sm break-words line-clamp-3">{diffError}</p>
                       </>
                     ) : (
                       <>
-                        <h3 className="text-sm font-medium text-foreground">No changes</h3>
+                        <h3 className="text-sm font-medium text-foreground">{t('review.diff.noChanges')}</h3>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {activeDiffBase === 'uncommitted' && `No uncommitted changes${activeWorktreePath ? ' in this worktree' : ' to review'}.`}
-                          {activeDiffBase === 'staged' && "No staged changes. Stage some files with git add."}
-                          {activeDiffBase === 'unstaged' && "No unstaged changes. All changes are staged."}
-                          {activeDiffBase === 'last-commit' && `No changes in the last commit${activeWorktreePath ? ' in this worktree' : ''}.`}
-                          {activeDiffBase === 'jj-current' && "No changes in the current jj change."}
-                          {activeDiffBase === 'jj-last' && "No changes in the last jj change."}
-                          {activeDiffBase === 'jj-line' && `No changes in your line of work vs ${selectedBase || gitContext?.defaultBranch || '@-'}.`}
-                          {activeDiffBase === 'jj-all' && "No files at the current jj change."}
-                          {activeDiffBase === 'branch' && `No changes vs ${selectedBase || gitContext?.defaultBranch || 'main'}${activeWorktreePath ? ' in this worktree' : ''}.`}
-                          {activeDiffBase === 'merge-base' && `No changes vs ${selectedBase || gitContext?.defaultBranch || 'main'}${activeWorktreePath ? ' in this worktree' : ''}.`}
-                          {activeDiffBase === 'all' && `No tracked files${activeWorktreePath ? ' in this worktree' : ' in this repository'}.`}
+                          {emptyDiffMessage}
                         </p>
                       </>
                     )}
                   </div>
                   {gitContext?.diffOptions && gitContext.diffOptions.length > 1 && (
                     <p className="text-xs text-muted-foreground/60">
-                      Try selecting a different view from the dropdown.
+                      {t('review.diff.tryDifferentView')}
                     </p>
                   )}
                 </div>
@@ -2226,7 +2261,7 @@ const ReviewApp: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
             <div className="bg-card border border-border rounded-xl w-full max-w-2xl flex flex-col max-h-[80vh] shadow-2xl">
               <div className="p-4 border-b border-border flex justify-between items-center">
-                <h3 className="font-semibold text-sm">Export Review Feedback</h3>
+                <h3 className="font-semibold text-sm">{t('review.exportFeedback')}</h3>
                 <button
                   onClick={() => setShowExportModal(false)}
                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -2238,7 +2273,7 @@ const ReviewApp: React.FC = () => {
               </div>
               <div className="flex-1 overflow-auto p-4">
                 <div className="text-xs text-muted-foreground mb-2">
-                  {allAnnotations.length} annotation{allAnnotations.length !== 1 ? 's' : ''}
+                  {formatAnnotationCount(allAnnotations.length)}
                 </div>
                 <pre className="export-code-block whitespace-pre-wrap">
                   {feedbackMarkdown}
@@ -2251,7 +2286,7 @@ const ReviewApp: React.FC = () => {
                   }}
                   className="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:opacity-90 transition-colors"
                 >
-                  Copy to Clipboard
+                  {t('actions.copyToClipboard')}
                 </button>
               </div>
             </div>
@@ -2277,22 +2312,22 @@ const ReviewApp: React.FC = () => {
           <ConfirmDialog
             isOpen={showWorktreeDialog}
             onClose={() => setShowWorktreeDialog(false)}
-            title="Local Worktree"
+            title={t('review.localWorktree')}
             wide
             message={
               <div className="space-y-3">
-                <p>This PR is checked out locally so review agents have full file access.</p>
+                <p>{t('review.localWorktreeDescription')}</p>
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">Path</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">{t('common.path')}</span>
                   <button
                     onClick={() => navigator.clipboard.writeText((agentCwd || gitContext?.cwd)!)}
                     className="mt-1 w-full text-left font-mono text-xs bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-foreground hover:bg-muted transition-colors cursor-pointer break-all"
-                    title="Click to copy"
+                    title={t('review.clickToCopy')}
                   >
                     {agentCwd || gitContext?.cwd}
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground/60">Automatically removed when this review session ends.</p>
+                <p className="text-xs text-muted-foreground/60">{t('review.localWorktreeRemoved')}</p>
               </div>
             }
             variant="info"
@@ -2303,8 +2338,8 @@ const ReviewApp: React.FC = () => {
         <ConfirmDialog
           isOpen={showNoAnnotationsDialog}
           onClose={() => setShowNoAnnotationsDialog(false)}
-          title="No Annotations"
-          message="You haven't made any annotations yet. There's nothing to copy."
+          title={t('review.noAnnotations')}
+          message={t('review.noAnnotationsMessage')}
           variant="info"
         />
 
@@ -2316,11 +2351,11 @@ const ReviewApp: React.FC = () => {
             setShowApproveWarning(false);
             handleApprove();
           }}
-          title="Annotations Won't Be Sent"
-          message={<>You have {totalAnnotationCount} annotation{totalAnnotationCount !== 1 ? 's' : ''} that will be lost if you approve.</>}
-          subMessage="To send your feedback, use Send Feedback instead."
-          confirmText="Approve Anyway"
-          cancelText="Cancel"
+          title={t('review.annotationsWontBeSent')}
+          message={t('review.annotationsLostApprove', { count: totalAnnotationCount, plural: totalAnnotationCount === 1 ? '' : 's' })}
+          subMessage={t('review.sendFeedbackInstead')}
+          confirmText={t('actions.approveAnyway')}
+          cancelText={t('actions.cancel')}
           variant="warning"
           showCancel
         />
@@ -2332,11 +2367,11 @@ const ReviewApp: React.FC = () => {
             setShowExitWarning(false);
             handleExit();
           }}
-          title="Annotations Won't Be Sent"
-          message={<>You have {totalAnnotationCount} annotation{totalAnnotationCount !== 1 ? 's' : ''} that will be lost if you close.</>}
-          subMessage="To send your feedback, use Send Feedback instead."
-          confirmText="Close Anyway"
-          cancelText="Cancel"
+          title={t('review.annotationsWontBeSent')}
+          message={t('review.annotationsLostClose', { count: totalAnnotationCount, plural: totalAnnotationCount === 1 ? '' : 's' })}
+          subMessage={t('review.sendFeedbackInstead')}
+          confirmText={t('actions.closeAnyway')}
+          cancelText={t('actions.cancel')}
           variant="warning"
           showCancel
         />
@@ -2365,20 +2400,20 @@ const ReviewApp: React.FC = () => {
         <CompletionOverlay
           submitted={submitted}
           title={
-            submitted === 'approved' ? 'Changes Approved'
-            : submitted === 'exited' ? 'Session Closed'
-            : 'Feedback Sent'
+            submitted === 'approved' ? t('completion.changesApproved')
+            : submitted === 'exited' ? t('completion.sessionClosed')
+            : t('completion.feedbackSent')
           }
           subtitle={
             submitted === 'exited'
-              ? 'Review session closed without feedback.'
+              ? t('completion.reviewSessionClosed')
               : platformMode
                 ? submitted === 'approved'
-                  ? `Your approval was submitted to ${platformLabel}.`
-                  : `Your feedback was submitted to ${platformLabel}.`
+                  ? t('completion.platformApprovalSubmitted', { platform: platformLabel })
+                  : t('completion.platformFeedbackSubmitted', { platform: platformLabel })
                 : submitted === 'approved'
-                  ? `${getAgentName(origin)} will proceed with the changes.`
-                  : `${getAgentName(origin)} will address your review feedback.`
+                  ? t('completion.agentWillProceedWithChanges', { agent: getAgentName(origin) })
+                  : t('completion.agentWillAddressReview', { agent: getAgentName(origin) })
           }
           agentLabel={getAgentName(origin)}
         />
@@ -2430,5 +2465,11 @@ const ReviewApp: React.FC = () => {
     </ThemeProvider>
   );
 };
+
+const ReviewApp: React.FC = () => (
+  <I18nProvider>
+    <ReviewAppContent />
+  </I18nProvider>
+);
 
 export default ReviewApp;
