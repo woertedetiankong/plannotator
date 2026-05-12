@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Tool } from './types';
 import { COLORS } from './types';
+import { useI18n } from '../../i18n';
+import { modKey } from '../../utils/platform';
 
 interface ToolbarProps {
   tool: Tool;
@@ -68,10 +70,10 @@ const CheckIcon = () => (
   </svg>
 );
 
-const TOOLS: { id: Tool; icon: React.FC; label: string }[] = [
-  { id: 'pen', icon: PenIcon, label: 'Pen (1)' },
-  { id: 'arrow', icon: ArrowIcon, label: 'Arrow (2)' },
-  { id: 'circle', icon: CircleIcon, label: 'Circle (3)' },
+const TOOLS: { id: Tool; icon: React.FC }[] = [
+  { id: 'pen', icon: PenIcon },
+  { id: 'arrow', icon: ArrowIcon },
+  { id: 'circle', icon: CircleIcon },
 ];
 
 const STROKE_SIZES = [3, 6, 10, 16, 24];
@@ -88,20 +90,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onClear,
   onSave,
 }) => {
+  const { t } = useI18n();
   const currentSizeIndex = STROKE_SIZES.indexOf(strokeSize);
   const canDecrease = currentSizeIndex > 0;
   const canIncrease = currentSizeIndex < STROKE_SIZES.length - 1;
+  const toolLabels: Record<Tool, string> = {
+    pen: t('imageAnnotator.tool.pen'),
+    arrow: t('imageAnnotator.tool.arrow'),
+    circle: t('imageAnnotator.tool.circle'),
+  };
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-xl">
       {/* Tools */}
       <div className="flex items-center gap-1">
-        {TOOLS.map(({ id, icon: Icon, label }) => (
+        {TOOLS.map(({ id, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => onToolChange(id)}
-            title={label}
+            title={toolLabels[id]}
             className={`p-1.5 rounded transition-colors ${
               tool === id
                 ? 'bg-primary text-primary-foreground'
@@ -121,7 +129,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           type="button"
           onClick={() => canDecrease && onStrokeSizeChange(STROKE_SIZES[currentSizeIndex - 1])}
           disabled={!canDecrease}
-          title="Smaller stroke"
+          title={t('imageAnnotator.smallerStroke')}
           className={`p-1 rounded transition-colors ${
             canDecrease
               ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
@@ -132,7 +140,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         </button>
         <div
           className="w-5 h-5 flex items-center justify-center"
-          title={`Stroke size: ${strokeSize}`}
+          title={t('imageAnnotator.strokeSize', { size: strokeSize })}
         >
           <div
             className="rounded-full"
@@ -147,7 +155,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           type="button"
           onClick={() => canIncrease && onStrokeSizeChange(STROKE_SIZES[currentSizeIndex + 1])}
           disabled={!canIncrease}
-          title="Larger stroke"
+          title={t('imageAnnotator.largerStroke')}
           className={`p-1 rounded transition-colors ${
             canIncrease
               ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
@@ -182,7 +190,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         type="button"
         onClick={onUndo}
         disabled={!canUndo}
-        title="Undo (Cmd+Z)"
+        title={t('imageAnnotator.undo', { shortcut: `${modKey}+Z` })}
         className={`p-1.5 rounded transition-colors ${
           canUndo
             ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
@@ -196,7 +204,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <button
         type="button"
         onClick={onClear}
-        title="Clear all"
+        title={t('imageAnnotator.clearAll')}
         className="p-1.5 rounded transition-colors hover:bg-muted text-muted-foreground hover:text-destructive"
       >
         <ClearIcon />
@@ -208,7 +216,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <button
         type="button"
         onClick={onSave}
-        title="Save (Esc)"
+        title={t('imageAnnotator.saveShortcut')}
         className="p-1.5 rounded transition-colors bg-success text-success-foreground hover:opacity-90"
       >
         <CheckIcon />

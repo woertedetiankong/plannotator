@@ -6,6 +6,9 @@ import { useTheme } from './ThemeProvider';
 import { CommentPopover } from './CommentPopover';
 import { ImageThumbnail } from './ImageThumbnail';
 import type { CodeAnnotation, ImageAttachment } from '../types';
+import { useI18n } from '../i18n';
+
+type TFunction = ReturnType<typeof useI18n>['t'];
 
 export interface CodeFileAnnotationInput {
   filePath: string;
@@ -103,8 +106,10 @@ function getLineSlice(contents: string, start: number, end: number): string {
     .join('\n');
 }
 
-function lineLabel(start: number, end: number): string {
-  return start === end ? `line ${start}` : `lines ${start}-${end}`;
+function lineLabel(start: number, end: number, t: TFunction): string {
+  return start === end
+    ? t('annotation.lineLabel.single', { line: start })
+    : t('annotation.lineLabel.range', { start, end });
 }
 
 function getLineNumberFromSelectionNode(node: Node | null): number | null {
@@ -141,6 +146,7 @@ const CodeInlineAnnotation: React.FC<{
   onEdit?: (id: string, updates: Partial<CodeAnnotation>) => void;
   onDelete?: (id: string) => void;
 }> = ({ annotation, isSelected, onSelect, onEdit, onDelete }) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(annotation.text ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -175,11 +181,11 @@ const CodeInlineAnnotation: React.FC<{
       }}
     >
       <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-        <span className="font-semibold text-primary">Comment</span>
+        <span className="font-semibold text-primary">{t('annotation.type.comment')}</span>
         <span className="rounded bg-muted px-1.5 py-0.5 font-mono normal-case text-foreground">
-          {lineLabel(annotation.lineStart, annotation.lineEnd)}
+          {lineLabel(annotation.lineStart, annotation.lineEnd, t)}
         </span>
-        {annotation.author && <span className="truncate normal-case">by {annotation.author}</span>}
+        {annotation.author && <span className="truncate normal-case">{t('annotation.byAuthor', { author: annotation.author })}</span>}
         <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
           {onEdit && !isEditing && (
             <button
@@ -189,7 +195,7 @@ const CodeInlineAnnotation: React.FC<{
                 setIsEditing(true);
               }}
               className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-              title="Edit comment"
+              title={t('annotation.editAnnotation')}
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -204,7 +210,7 @@ const CodeInlineAnnotation: React.FC<{
                 onDelete(annotation.id);
               }}
               className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              title="Delete comment"
+              title={t('annotation.deleteAnnotation')}
             >
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -243,7 +249,7 @@ const CodeInlineAnnotation: React.FC<{
               }}
               className="rounded bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:opacity-90"
             >
-              Save
+              {t('actions.save')}
             </button>
             <button
               type="button"
@@ -254,7 +260,7 @@ const CodeInlineAnnotation: React.FC<{
               }}
               className="rounded bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted/80"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
           </div>
         </div>
@@ -298,6 +304,7 @@ export const CodeFilePopout: React.FC<CodeFilePopoutProps> = ({
   onSelectAnnotation,
   container,
 }) => {
+  const { t } = useI18n();
   const { resolvedMode } = useTheme();
   const mode = resolvedMode ?? 'dark';
   const colors = getThemeColors();
@@ -375,10 +382,10 @@ export const CodeFilePopout: React.FC<CodeFilePopoutProps> = ({
       range: { start, end },
       anchorEl,
       anchorRect: anchorRect ?? anchorEl?.getBoundingClientRect() ?? lastPointerRectRef.current ?? undefined,
-      contextText: `${relativePath} ${lineLabel(start, end)}`,
+      contextText: `${relativePath} ${lineLabel(start, end, t)}`,
       originalCode: getLineSlice(contents, start, end),
     });
-  }, [contents, relativePath]);
+  }, [contents, relativePath, t]);
 
   const openCommentForBrowserSelection = useCallback(() => {
     if (!onAddAnnotation) return;
@@ -418,7 +425,7 @@ export const CodeFilePopout: React.FC<CodeFilePopoutProps> = ({
       <button
         type="button"
         style={gutterButtonStyle}
-        title="Add code comment"
+        title={t('codeFile.addCodeComment')}
         onMouseEnter={(e) => {
           e.currentTarget.style.filter = 'brightness(1.2)';
         }}
@@ -435,7 +442,7 @@ export const CodeFilePopout: React.FC<CodeFilePopoutProps> = ({
         +
       </button>
     );
-  }, [openCommentForRange]);
+  }, [openCommentForRange, t]);
 
   const handleLineSelectionEnd = useCallback((range: PierreSelectedLineRange | null) => {
     if (!onAddAnnotation) return;
@@ -488,8 +495,7 @@ export const CodeFilePopout: React.FC<CodeFilePopoutProps> = ({
           </code>
           {isNotFound && (
             <p className="text-xs text-muted-foreground mt-1">
-              The path was referenced in the document but no matching file was found
-              in this project. It may describe a planned/future file.
+              {t('codeFile.pathNotFoundHelp')}
             </p>
           )}
         </div>
@@ -516,11 +522,14 @@ export const CodeFilePopout: React.FC<CodeFilePopoutProps> = ({
         </div>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs text-muted-foreground tabular-nums">
-            {lineCount} lines
+            {t('codeFile.lineCount', {
+              count: lineCount,
+              plural: lineCount === 1 ? '' : 's',
+            })}
           </span>
           <button
             onClick={handleCopy}
-            title={copied ? 'Copied!' : 'Copy file contents'}
+            title={copied ? t('actions.copied') : t('codeFile.copyFileContents')}
             className={`p-1.5 rounded-md transition-colors ${
               copied ? 'text-success' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}

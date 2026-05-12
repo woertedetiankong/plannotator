@@ -4,6 +4,7 @@ import { Toolbar } from './Toolbar';
 import { renderStroke } from './utils';
 import type { Point, Stroke, Tool, AnnotatorState } from './types';
 import { DEFAULT_STATE } from './types';
+import { useI18n } from '../../i18n';
 
 interface ImageAnnotatorProps {
   imageSrc: string;
@@ -21,6 +22,7 @@ export const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
   onClose,
   initialName = '',
 }) => {
+  const { t } = useI18n();
   const [state, setState] = useState<AnnotatorState>(DEFAULT_STATE);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState(initialName);
@@ -235,7 +237,7 @@ export const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
         {/* Image name input */}
         {initialName && (
           <div className="flex items-center gap-2 w-full max-w-xs">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Name</label>
+            <label className="text-xs text-muted-foreground whitespace-nowrap">{t('imageAnnotator.name')}</label>
             <input
               ref={nameInputRef}
               type="text"
@@ -248,21 +250,21 @@ export const ImageAnnotator: React.FC<ImageAnnotatorProps> = ({
                 }
               }}
               className="flex-1 px-2 py-1 text-xs bg-muted/50 border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder="Image name..."
+              placeholder={t('imageAnnotator.namePlaceholder')}
             />
           </div>
         )}
 
         {/* Accept hint */}
         <div className="text-xs text-muted-foreground">
-          Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Esc</kbd> or <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Enter</kbd> or click outside to accept
+          {t('imageAnnotator.acceptHint.press')} <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Esc</kbd> {t('common.or')} <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">Enter</kbd> {t('common.or')} {t('imageAnnotator.acceptHint.clickOutside')}
         </div>
       </div>
 
       {/* Loading overlay */}
       {saving && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-          <div className="text-sm text-muted-foreground">Saving...</div>
+          <div className="text-sm text-muted-foreground">{t('common.saving')}</div>
         </div>
       )}
     </div>

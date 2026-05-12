@@ -5,6 +5,10 @@ import { ImageThumbnail } from './ImageThumbnail';
 import { EditorAnnotationCard } from './EditorAnnotationCard';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { OverlayScrollArea } from './OverlayScrollArea';
+import { useI18n } from '../i18n';
+import { modKey } from '../utils/platform';
+
+type TFunction = ReturnType<typeof useI18n>['t'];
 
 interface PanelProps {
   isOpen: boolean;
@@ -51,6 +55,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
   otherFileAnnotations,
   onOtherFileAnnotationsClick,
 }) => {
+  const { t } = useI18n();
   const isMobile = useIsMobile();
   const [copiedText, setCopiedText] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -85,7 +90,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
       <div className="p-3 border-b border-border/50">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Annotations
+            {t('annotation.title')}
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
@@ -95,7 +100,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
               <button
                 onClick={onClose}
                 className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                title="Close panel"
+                title={t('annotation.closePanel')}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -108,9 +113,13 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
           <button
             onClick={onOtherFileAnnotationsClick}
             className="mt-1.5 text-[10px] text-primary/70 hover:text-primary transition-colors cursor-pointer"
-            title="Show annotated files in sidebar"
+            title={t('annotation.showAnnotatedFiles')}
           >
-            +{otherFileAnnotations.count} in {otherFileAnnotations.files} other file{otherFileAnnotations.files === 1 ? '' : 's'}
+            {t('annotation.otherFiles', {
+              count: otherFileAnnotations.count,
+              files: otherFileAnnotations.files,
+              plural: otherFileAnnotations.files === 1 ? '' : 's',
+            })}
           </button>
         )}
       </div>
@@ -126,7 +135,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
               </svg>
             </div>
             <p className="text-xs text-muted-foreground">
-              Select text or code lines to add annotations
+              {t('annotation.selectTextOrCodePrompt')}
             </p>
           </div>
         ) : (
@@ -157,7 +166,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
                 {timelineEntries.length > 0 && (
                   <div className="flex items-center gap-2 pt-2 pb-1">
                     <div className="flex-1 border-t border-border/30" />
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">Editor</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">{t('annotation.editor')}</span>
                     <div className="flex-1 border-t border-border/30" />
                   </div>
                 )}
@@ -193,14 +202,14 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  Copied
+                  {t('actions.copied')}
                 </>
               ) : (
                 <>
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  Copy
+                  {t('actions.copy')}
                 </>
               )}
             </button>
@@ -213,7 +222,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
-              Share
+              {t('actions.share')}
             </button>
           )}
         </div>
@@ -236,7 +245,7 @@ export const AnnotationPanel: React.FC<PanelProps> = ({
   return panel;
 };
 
-function formatTimestamp(ts: number): string {
+function formatTimestamp(ts: number, t: TFunction): string {
   const now = Date.now();
   const diff = now - ts;
   const seconds = Math.floor(diff / 1000);
@@ -244,12 +253,18 @@ function formatTimestamp(ts: number): string {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (seconds < 60) return 'now';
-  if (minutes < 60) return `${minutes}m`;
-  if (hours < 24) return `${hours}h`;
-  if (days < 7) return `${days}d`;
+  if (seconds < 60) return t('annotation.timestamp.now');
+  if (minutes < 60) return t('annotation.timestamp.minutes', { count: minutes });
+  if (hours < 24) return t('annotation.timestamp.hours', { count: hours });
+  if (days < 7) return t('annotation.timestamp.days', { count: days });
 
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatLineLabel(start: number, end: number, t: TFunction): string {
+  return start === end
+    ? t('annotation.lineLabel.single', { line: start })
+    : t('annotation.lineLabel.range', { start, end });
 }
 
 const AnnotationCard: React.FC<{
@@ -259,6 +274,7 @@ const AnnotationCard: React.FC<{
   onDelete: () => void;
   onEdit?: (updates: Partial<Annotation>) => void;
 }> = ({ annotation, isSelected, onSelect, onDelete, onEdit }) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(annotation.text || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -307,7 +323,7 @@ const AnnotationCard: React.FC<{
 
   const typeConfig = {
     [AnnotationType.DELETION]: {
-      label: 'Delete',
+      label: t('annotation.type.delete'),
       color: 'text-destructive',
       bg: 'bg-destructive/10',
       icon: (
@@ -317,7 +333,7 @@ const AnnotationCard: React.FC<{
       )
     },
     [AnnotationType.COMMENT]: {
-      label: 'Comment',
+      label: t('annotation.type.comment'),
       color: 'text-accent',
       bg: 'bg-accent/10',
       icon: (
@@ -327,7 +343,7 @@ const AnnotationCard: React.FC<{
       )
     },
     [AnnotationType.GLOBAL_COMMENT]: {
-      label: 'Global',
+      label: t('annotation.type.global'),
       color: 'text-secondary',
       bg: 'bg-secondary/10',
       icon: (
@@ -340,7 +356,7 @@ const AnnotationCard: React.FC<{
 
   // Fallback for unknown types (forward compatibility)
   const config = typeConfig[annotation.type] || {
-    label: 'Note',
+    label: t('annotation.type.note'),
     color: 'text-muted-foreground',
     bg: 'bg-muted/50',
     icon: (
@@ -368,7 +384,7 @@ const AnnotationCard: React.FC<{
           <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <span className="truncate">{annotation.author}{isCurrentUser(annotation.author) && ' (me)'}</span>
+          <span className="truncate">{annotation.author}{isCurrentUser(annotation.author) && t('annotation.meSuffix')}</span>
         </div>
       )}
 
@@ -385,11 +401,11 @@ const AnnotationCard: React.FC<{
           </div>
           {annotation.diffContext && (
             <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
-              diff
+              {t('annotation.diffContext')}
             </span>
           )}
           <span className="text-[10px] text-muted-foreground/50">
-            {formatTimestamp(annotation.createdA)}
+            {formatTimestamp(annotation.createdA, t)}
           </span>
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all">
@@ -397,7 +413,7 @@ const AnnotationCard: React.FC<{
             <button
               onClick={handleStartEdit}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-              title="Edit annotation"
+              title={t('annotation.editAnnotation')}
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -407,7 +423,7 @@ const AnnotationCard: React.FC<{
           <button
             onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); onDelete(); }}
             className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-            title="Delete annotation"
+            title={t('annotation.deleteAnnotation')}
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -430,20 +446,20 @@ const AnnotationCard: React.FC<{
               rows={Math.min(editText.split('\n').length + 1, 8)}
             />
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span>Press Cmd+Enter to save, Esc to cancel</span>
+              <span>{t('annotation.editHint', { shortcut: `${modKey}+Enter` })}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleSaveEdit(); }}
                 className="px-2 py-1 text-[10px] font-medium rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Save
+                {t('actions.save')}
               </button>
               <button
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleCancelEdit(); }}
                 className="px-2 py-1 text-[10px] font-medium rounded bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
               >
-                Cancel
+                {t('actions.cancel')}
               </button>
             </div>
           </div>
@@ -473,20 +489,20 @@ const AnnotationCard: React.FC<{
                   rows={Math.min(editText.split('\n').length + 1, 8)}
                 />
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span>Press Cmd+Enter to save, Esc to cancel</span>
+                  <span>{t('annotation.editHint', { shortcut: `${modKey}+Enter` })}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleSaveEdit(); }}
                     className="px-2 py-1 text-[10px] font-medium rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
-                    Save
+                    {t('actions.save')}
                   </button>
                   <button
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleCancelEdit(); }}
                     className="px-2 py-1 text-[10px] font-medium rounded bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
                   >
-                    Cancel
+                    {t('actions.cancel')}
                   </button>
                 </div>
               </div>
@@ -527,6 +543,7 @@ const CodeAnnotationCard: React.FC<{
   onDelete: () => void;
   onEdit?: (updates: Partial<CodeAnnotation>) => void;
 }> = ({ annotation, isSelected, onSelect, onDelete, onEdit }) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(annotation.text || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -547,9 +564,7 @@ const CodeAnnotationCard: React.FC<{
     setIsEditing(false);
   };
 
-  const lineRange = annotation.lineStart === annotation.lineEnd
-    ? `line ${annotation.lineStart}`
-    : `lines ${annotation.lineStart}-${annotation.lineEnd}`;
+  const lineRange = formatLineLabel(annotation.lineStart, annotation.lineEnd, t);
   const fileName = annotation.filePath.split('/').pop() || annotation.filePath;
 
   return (
@@ -567,7 +582,7 @@ const CodeAnnotationCard: React.FC<{
           <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          <span className="truncate">{annotation.author}{isCurrentUser(annotation.author) && ' (me)'}</span>
+          <span className="truncate">{annotation.author}{isCurrentUser(annotation.author) && t('annotation.meSuffix')}</span>
         </div>
       )}
 
@@ -579,9 +594,9 @@ const CodeAnnotationCard: React.FC<{
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide">Code</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide">{t('annotation.type.code')}</span>
           </div>
-          <span className="text-[10px] text-muted-foreground/50">{formatTimestamp(annotation.createdAt)}</span>
+          <span className="text-[10px] text-muted-foreground/50">{formatTimestamp(annotation.createdAt, t)}</span>
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all">
           {onEdit && !isEditing && (
@@ -591,7 +606,7 @@ const CodeAnnotationCard: React.FC<{
                 setIsEditing(true);
               }}
               className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-              title="Edit annotation"
+              title={t('annotation.editAnnotation')}
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -604,7 +619,7 @@ const CodeAnnotationCard: React.FC<{
               onDelete();
             }}
             className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-            title="Delete annotation"
+            title={t('annotation.deleteAnnotation')}
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -651,7 +666,7 @@ const CodeAnnotationCard: React.FC<{
               }}
               className="px-2 py-1 text-[10px] font-medium rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              Save
+              {t('actions.save')}
             </button>
             <button
               onClick={(e) => {
@@ -661,7 +676,7 @@ const CodeAnnotationCard: React.FC<{
               }}
               className="px-2 py-1 text-[10px] font-medium rounded bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
           </div>
         </div>
